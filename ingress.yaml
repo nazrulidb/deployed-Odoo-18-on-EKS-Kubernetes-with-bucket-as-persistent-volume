@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: odoo-ingress # Renamed for clarity
+  annotations:
+    # --- Timeouts ---
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "720s"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "720s" # Usually lower, e.g., "60s"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "720s"
+
+    # --- Gzip ---
+    nginx.ingress.kubernetes.io/use-gzip: "true"
+    nginx.ingress.kubernetes.io/gzip-types: "text/css text/scss text/plain text/xml application/xml application/json application/javascript"
+
+    nginx.ingress.kubernetes.io/proxy-buffering: "off" 
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: odoo-ha.mrdc.tech # Make sure this is your intended hostname
+      http:
+        paths:
+          - path: /longpolling # Route for Odoo's longpolling/bus
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo # Correct name of your Odoo service
+                port:
+                  name: longpolling # Assumes your service has a port named 'longpolling' (e.g., port 8072 -> targetPort 8072)
+                    number: 8072 # Or by number
+   
+          - path: / # Main Odoo application path
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo # Correct name of your Odoo service
+                port:
+                  #name: http # Assumes your service has a port named 'http' (e.g., port 80 -> targetPort 8069)
+                   number: 8069 # Or by number
+  tls:
+   - hosts:
+       - odoo-ha.mrdc.tech
+     secretName: letsencrypt-prod

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo  # Sets Deployment name
+spec:
+  #replicas: 2
+  selector:
+    matchLabels:
+      app: odoo
+  template:
+    metadata:
+      labels:
+        app: odoo
+    spec:
+      securityContext:
+          fsGroup: 101     # GID of the 'odoo' group (usually 101)
+          #Optional, but good practice for explicitness:
+          #runAsUser: 101   # UID of the 'odoo' user
+            #runAsGroup: 101
+         # runAsUser: 0
+      initContainers:
+        - name: copy-addons
+          image: nazrulidb/odoo18:04
+          command: [ "sh", "-c", "cp -r /opt/custom-addons/* /mnt/extra-addons/" ]
+          volumeMounts:
+             - name: custom-addons
+               mountPath: /mnt/extra-addons
+                   
+
+      containers:
+        - name: odoo
+          image: nazrulidb/odoo18:04
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 8069  # Exposes container port
+          #envFrom:
+          #  - configMapRef:
+          #     name: odoo-config
+          args: ["--log-level=info", "--db-filter=.*"]
+          volumeMounts:
+           - name: odoo-filestore
+             mountPath: /var/lib/odoo
+           - name: custom-addons
+             mountPath: /mnt/extra-addons
+           - name: odoo-config-volume
+             mountPath: /etc/odoo/odoo.conf
+             subPath: odoo.conf
+
+
+      volumes:
+        - name: odoo-filestore
+          persistentVolumeClaim:
+            claimName: efs-claim
+            readOnly: false
+            
+        - name: custom-addons
+          persistentVolumeClaim:
+            claimName: efs-claim-module
+            readOnly: false
+            
+        - name: odoo-config-volume
+          configMap:
+             name: odoo-config
