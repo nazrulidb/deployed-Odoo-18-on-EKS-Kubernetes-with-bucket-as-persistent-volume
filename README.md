@@ -1,0 +1,1 @@
+# deployed-Odoo-18-on-GKE-Kubernetes-with-bucket-as-persistent-volume
