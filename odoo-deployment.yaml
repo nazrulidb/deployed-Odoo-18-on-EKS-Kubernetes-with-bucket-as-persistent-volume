@@ -29,7 +29,7 @@ spec:
 
       containers:
         - name: odoo
-          image: nazrulidb/odoo18:04
+          image: odoo:18.0
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 8069  # Exposes container port
@@ -50,12 +50,12 @@ spec:
       volumes:
         - name: odoo-filestore
           persistentVolumeClaim:
-            claimName: efs-claim
+            claimName: s3-pvc
             readOnly: false
             
         - name: custom-addons
           persistentVolumeClaim:
-            claimName: efs-claim-module
+            claimName: s3-pvc-2
             readOnly: false
             
         - name: odoo-config-volume
