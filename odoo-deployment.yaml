@@ -50,7 +50,7 @@ spec:
       volumes:
         - name: odoo-filestore
           persistentVolumeClaim:
-            claimName: s3-pvc
+            claimName: efs-claim
             readOnly: false
             
         - name: custom-addons
